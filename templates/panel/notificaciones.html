@@ -1,0 +1,503 @@
+{% extends "panel/base_admin.html" %}
+
+{% block title %}Notificaciones - Panel de Control{% endblock %}
+
+{% block breadcrumb %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="notificaciones-wrapper">
+    <!-- Encabezado de página -->
+    <div class="page-header-amazon">
+        <div class="header-title">
+            <h1><i class="fas fa-bell"></i> Notificaciones</h1>
+            <p class="header-subtitle">Todas tus notificaciones en un solo lugar</p>
+        </div>
+        <div class="header-actions">
+            <button class="amazon-btn-primary" onclick="marcarTodasLeidas()">
+                <i class="fas fa-check-double"></i> Marcar todas como leídas
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros de notificaciones -->
+    <div class="notificaciones-filtros">
+        <button class="filtro-btn active" onclick="filtrarNotificaciones('todas')">
+            Todas
+        </button>
+        <button class="filtro-btn" onclick="filtrarNotificaciones('no-leidas')">
+            No leídas
+        </button>
+        <button class="filtro-btn" onclick="filtrarNotificaciones('leidas')">
+            Leídas
+        </button>
+    </div>
+
+    <!-- Lista de notificaciones -->
+    <div class="amazon-card">
+        <div class="card-header">
+            <h2><i class="fas fa-list"></i> Tus notificaciones</h2>
+            <span class="product-count" id="notificacionCount">0 notificaciones</span>
+        </div>
+
+        <div class="notificaciones-lista" id="notificacionesLista">
+            <!-- Notificación 1 -->
+            <div class="notificacion-item no-leida" data-id="1">
+                <div class="notificacion-icono">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="notificacion-contenido">
+                    <div class="notificacion-header">
+                        <strong>Nuevo producto añadido</strong>
+                        <span class="notificacion-fecha">Hace 5 minutos</span>
+                    </div>
+                    <p>Se ha añadido "Silla Ergonómica Profesional" al catálogo</p>
+                    <div class="notificacion-acciones">
+                        <button class="btn-leer" onclick="marcarLeida(this)">Marcar como leída</button>
+                        <button class="btn-eliminar" onclick="eliminarNotificacion(this)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notificación 2 -->
+            <div class="notificacion-item no-leida" data-id="2">
+                <div class="notificacion-icono">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="notificacion-contenido">
+                    <div class="notificacion-header">
+                        <strong>100 visitas hoy</strong>
+                        <span class="notificacion-fecha">Hace 2 horas</span>
+                    </div>
+                    <p>Has alcanzado 100 visitas en tu filtro hoy</p>
+                    <div class="notificacion-acciones">
+                        <button class="btn-leer" onclick="marcarLeida(this)">Marcar como leída</button>
+                        <button class="btn-eliminar" onclick="eliminarNotificacion(this)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notificación 3 -->
+            <div class="notificacion-item" data-id="3">
+                <div class="notificacion-icono">
+                    <i class="fas fa-tag"></i>
+                </div>
+                <div class="notificacion-contenido">
+                    <div class="notificacion-header">
+                        <strong>Nueva categoría disponible</strong>
+                        <span class="notificacion-fecha">Hace 1 día</span>
+                    </div>
+                    <p>Se ha creado la categoría "Iluminación"</p>
+                    <div class="notificacion-acciones">
+                        <button class="btn-eliminar" onclick="eliminarNotificacion(this)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notificación 4 -->
+            <div class="notificacion-item" data-id="4">
+                <div class="notificacion-icono">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="notificacion-contenido">
+                    <div class="notificacion-header">
+                        <strong>Producto sin stock</strong>
+                        <span class="notificacion-fecha">Hace 3 días</span>
+                    </div>
+                    <p>El producto "Apple AirPods Pro" está agotado en Amazon</p>
+                    <div class="notificacion-acciones">
+                        <button class="btn-eliminar" onclick="eliminarNotificacion(this)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado vacío -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <h3>Todas las notificaciones leídas</h3>
+            <p>No tienes notificaciones pendientes</p>
+        </div>
+
+        <!-- Pie de lista -->
+        <div class="table-footer">
+            <div class="table-info">
+                <i class="fas fa-info-circle"></i>
+                <span id="infoText">Mostrando todas las notificaciones</span>
+            </div>
+            <div class="table-tip">
+                <i class="fas fa-lightbulb"></i>
+                <span>Las notificaciones se eliminan automáticamente después de 30 días</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recordatorio de filtro -->
+    <div class="filtro-reminder">
+        <i class="fas fa-filter"></i>
+        <p><strong>Mantente al día</strong> - Recibe notificaciones sobre nuevos productos, categorías y estadísticas de tu filtro</p>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para notificaciones */
+.notificaciones-wrapper {
+    animation: fadeIn 0.4s ease;
+}
+
+.notificaciones-filtros {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filtro-btn {
+    padding: 8px 20px;
+    background: #f3f4f6;
+    border: 2px solid #d1d5db;
+    border-radius: 50px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filtro-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.filtro-btn.active {
+    background: #ff9900;
+    border-color: #ff9900;
+    color: #000000;
+    font-weight: 600;
+}
+
+.notificaciones-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.notificacion-item {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.notificacion-item:hover {
+    border-color: #ff9900;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.notificacion-item.no-leida {
+    border-left: 5px solid #ff9900;
+    background: #fffbeb;
+}
+
+.notificacion-item.leida {
+    opacity: 0.7;
+}
+
+.notificacion-icono {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 153, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notificacion-icono i {
+    font-size: 1.5rem;
+    color: #ff9900;
+}
+
+.notificacion-contenido {
+    flex: 1;
+}
+
+.notificacion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.notificacion-header strong {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.notificacion-fecha {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.notificacion-contenido p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.notificacion-acciones {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-leer {
+    padding: 6px 16px;
+    background: #ff9900;
+    color: #000000;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-leer:hover {
+    background: #e68900;
+    transform: translateY(-2px);
+}
+
+.btn-eliminar {
+    padding: 6px 16px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-eliminar:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Modo oscuro */
+.dark-mode .notificacion-item {
+    background: #1e1e2e;
+    border-color: #3a3a5a;
+}
+
+.dark-mode .notificacion-item.no-leida {
+    background: #1a1a2e;
+    border-left-color: #ff9900;
+}
+
+.dark-mode .notificacion-header strong {
+    color: #ffffff;
+}
+
+.dark-mode .notificacion-contenido p {
+    color: #cccccc;
+}
+
+.dark-mode .filtro-btn {
+    background: #2a2a3e;
+    border-color: #3a3a5a;
+    color: #cccccc;
+}
+
+.dark-mode .filtro-btn:hover {
+    background: #3a3a5a;
+}
+
+.dark-mode .filtro-btn.active {
+    background: #ff9900;
+    color: #000000;
+}
+
+.dark-mode .btn-eliminar {
+    background: #2a2a3e;
+    border-color: #3a3a5a;
+    color: #cccccc;
+}
+
+.dark-mode .btn-eliminar:hover {
+    background: #3a1a1a;
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notificacion-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notificacion-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notificacion-acciones {
+        flex-wrap: wrap;
+    }
+    
+    .notificaciones-filtros {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .notificacion-acciones {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-leer,
+    .btn-eliminar {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ocultar/Mostrar */
+.hidden-notificacion {
+    display: none !important;
+}
+</style>
+
+<script>
+function marcarLeida(boton) {
+    var item = boton.closest('.notificacion-item');
+    item.classList.remove('no-leida');
+    item.classList.add('leida');
+    
+    // Ocultar botón de marcar como leída
+    var btnLeer = item.querySelector('.btn-leer');
+    if (btnLeer) {
+        btnLeer.style.display = 'none';
+    }
+    
+    actualizarContador();
+}
+
+function marcarTodasLeidas() {
+    var items = document.querySelectorAll('.notificacion-item.no-leida');
+    items.forEach(function(item) {
+        item.classList.remove('no-leida');
+        item.classList.add('leida');
+        
+        var btnLeer = item.querySelector('.btn-leer');
+        if (btnLeer) {
+            btnLeer.style.display = 'none';
+        }
+    });
+    
+    actualizarContador();
+}
+
+function eliminarNotificacion(boton) {
+    var item = boton.closest('.notificacion-item');
+    if (confirm('¿Eliminar esta notificación?')) {
+        item.style.transition = 'all 0.3s ease';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(30px)';
+        setTimeout(function() {
+            item.style.display = 'none';
+            actualizarContador();
+            verificarVacio();
+        }, 300);
+    }
+}
+
+function filtrarNotificaciones(filtro) {
+    // Actualizar botones
+    var botones = document.querySelectorAll('.filtro-btn');
+    botones.forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    var items = document.querySelectorAll('.notificacion-item');
+    var visibles = 0;
+    
+    items.forEach(function(item) {
+        if (filtro === 'todas') {
+            item.style.display = 'flex';
+            visibles++;
+        } else if (filtro === 'no-leidas') {
+            if (item.classList.contains('no-leida')) {
+                item.style.display = 'flex';
+                visibles++;
+            } else {
+                item.style.display = 'none';
+            }
+        } else if (filtro === 'leidas') {
+            if (item.classList.contains('leida')) {
+                item.style.display = 'flex';
+                visibles++;
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+    
+    // Actualizar texto de información
+    var infoText = document.getElementById('infoText');
+    var filtroTexto = {
+        'todas': 'todas',
+        'no-leidas': 'no leídas',
+        'leidas': 'leídas'
+    };
+    infoText.textContent = 'Mostrando ' + visibles + ' notificaciones ' + filtroTexto[filtro];
+    
+    verificarVacio();
+}
+
+function actualizarContador() {
+    var noLeidas = document.querySelectorAll('.notificacion-item.no-leida:not([style*="display: none"])').length;
+    var total = document.querySelectorAll('.notificacion-item:not([style*="display: none"])').length;
+    var count = document.getElementById('notificacionCount');
+    count.textContent = noLeidas + ' no leídas de ' + total + ' total';
+}
+
+function verificarVacio() {
+    var itemsVisibles = document.querySelectorAll('.notificacion-item:not([style*="display: none"])');
+    var emptyState = document.getElementById('emptyState');
+    var lista = document.getElementById('notificacionesLista');
+    
+    if (itemsVisibles.length === 0) {
+        emptyState.style.display = 'block';
+        lista.style.display = 'none';
+    } else {
+        emptyState.style.display = 'none';
+        lista.style.display = 'flex';
+    }
+}
+
+// Inicializar contador
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarContador();
+});
+</script>
+
+{% endblock %}

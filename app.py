@@ -1099,13 +1099,16 @@ def panel_notificaciones():
 def index():
     actualizar_estadisticas('inicio')
     
-    productos_destacados = Producto.query.filter_by(destacado=True).all()
+    # 👇 Cambiar a todos los productos
+    productos = Producto.query.all()
+    
     categoria_actual = request.args.get('categoria')
     if categoria_actual:
         categoria_actual = escape(categoria_actual)
+        productos = Producto.query.filter_by(categoria=categoria_actual).all()
     
     return render_template('index.html', 
-                         productos=productos_destacados,
+                         productos=productos,  # ✅ Todos los productos
                          categorias=get_categorias_lista(),
                          categoria_actual=categoria_actual)
 
@@ -1157,6 +1160,27 @@ def privacidad():
 @app.route('/legal')
 def legal():
     actualizar_estadisticas('legal')
+    return render_template('legal.html', categorias=get_categorias_lista())
+
+# ========== RUTAS LEGALES COMPLETAS ==========
+@app.route('/legal/privacidad')
+def legal_privacidad():
+    actualizar_estadisticas('legal_privacidad')
+    return render_template('privacidad.html', categorias=get_categorias_lista())
+
+@app.route('/legal/cookies')
+def legal_cookies():
+    actualizar_estadisticas('legal_cookies')
+    return render_template('cookies.html', categorias=get_categorias_lista())
+
+@app.route('/legal/aviso-legal')
+def legal_aviso():
+    actualizar_estadisticas('legal_aviso')
+    return render_template('legal.html', categorias=get_categorias_lista())
+
+@app.route('/legal/afiliados')
+def legal_afiliados():
+    actualizar_estadisticas('legal_afiliados')
     return render_template('legal.html', categorias=get_categorias_lista())
 
 @app.route('/categorias')
@@ -1315,13 +1339,15 @@ def sitemap():
 def not_found_error(error):
     return render_template('404.html', 
                          categorias=get_categorias_lista(),
-                         request=request), 404
+                         request=request,
+                         now=datetime.now()), 404
 
 @app.errorhandler(400)
 def bad_request_error(error):
     return render_template('400.html', 
                          categorias=get_categorias_lista(),
-                         request=request), 400
+                         request=request,
+                         now=datetime.now()), 400
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -1330,7 +1356,8 @@ def internal_error(error):
     return render_template('500.html', 
                          categorias=get_categorias_lista(),
                          request=request,
-                         error_id=error_id), 500
+                         error_id=error_id,
+                         now=datetime.now()), 500
 
 
 

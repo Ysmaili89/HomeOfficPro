@@ -6955,3 +6955,51 @@ body {
         text-align: center;
     }
 }
+  
+/* ===== LOGO CON ICONO FILTRO ===== */
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Amazon Ember', 'Inter', sans-serif;
+}
+
+.logo-text .logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff9900;
+    color: #232f3e;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.logo-link:hover .logo-icon {
+    transform: rotate(15deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.4);
+}
+
+.logo-text .logo-highlight {
+    color: #ff9900;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 1.2rem;
+    }
+    
+    .logo-text .logo-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+}

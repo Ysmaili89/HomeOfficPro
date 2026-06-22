@@ -61,7 +61,7 @@
         <div class="header-content">
             <div class="logo">
                 <a href="/" class="logo-link" title="Inicio">
-                    <span class="logo-text">Filtro de afiliados</span>
+                    <span class="logo-text">🏠 Home Office Pro</span>
                 </a>
             </div>
             
@@ -117,8 +117,8 @@
                         <a href="/categorias"><i class="fas fa-th-list"></i> Categorías</a>
                     </li>
 
-                    <li class="{% if request.path == '/nosotros' %}active{% endif %}">
-                        <a href="/nosotros"><i class="fas fa-info-circle"></i> Nosotros</a>
+                    <li class="{% if request.path == '/acerca' %}active{% endif %}">
+                        <a href="/acerca"><i class="fas fa-info-circle"></i> Nosotros</a>
                     </li>
                     <li class="{% if request.path == '/contacto' %}active{% endif %}">
                         <a href="/contacto"><i class="fas fa-envelope"></i> Contacto</a>
@@ -130,11 +130,11 @@
                         <a href="#"><i class="fas fa-link"></i> Más <i class="fas fa-chevron-down"></i></a>
                         <ul class="dropdown-nav-content">
                             <li><a href="/mapa-web"><i class="fas fa-sitemap"></i> Mapa Web</a></li>
-                            <li><a href="/cookies"><i class="fas fa-cookie-bite"></i> Cookies</a></li>
+                            <li><a href="/legal/cookies"><i class="fas fa-cookie-bite"></i> Cookies</a></li>
                             <li><a href="/terminos"><i class="fas fa-file-contract"></i> Términos</a></li>
-                            <li><a href="/privacidad"><i class="fas fa-shield-alt"></i> Privacidad</a></li>
-                            <li><a href="/legal"><i class="fas fa-gavel"></i> Aviso Legal</a></li>
-                            <li><a href="/categorias"><i class="fas fa-tags"></i> Todas las Etiquetas</a></li>
+                            <li><a href="/legal/privacidad"><i class="fas fa-shield-alt"></i> Privacidad</a></li>
+                            <li><a href="/legal/aviso-legal"><i class="fas fa-gavel"></i> Aviso Legal</a></li>
+                            <li><a href="/legal/afiliados"><i class="fas fa-hand-holding-usd"></i> Afiliados</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -162,8 +162,8 @@
             
             <!-- CONTENIDO DE CADA PÁGINA -->
             {% block content %}
-            <h1>Bienvenido a La Preferida</h1>
-            <p>Contenido principal de la página</p>
+            <h1>Bienvenido a Home Office Pro</h1>
+            <p>Tu filtro de confianza para productos de oficina en casa en Amazon</p>
             {% endblock %}
         </main>
         
@@ -182,8 +182,8 @@
                 <ul class="categorias-lista">
                     {% for cat in categorias[:5] %}
                     <li>
-                        <a href="/categoria/{{ cat }}">
-                            <i class="fas fa-folder"></i> {{ cat|capitalize }}
+                        <a href="/categoria/{{ cat.slug if cat.slug is defined else cat }}">
+                            <i class="fas fa-folder"></i> {{ cat.nombre if cat.nombre is defined else cat|capitalize }}
                         </a>
                     </li>
                     {% endfor %}
@@ -230,8 +230,8 @@
         <div class="footer-grid">
             <!-- Columna 1: Descripción -->
             <div class="footer-section">
-                <h4><i class="fas fa-info-circle"></i> La Preferida</h4>
-                <p>Somos un filtro independiente que te ayuda a encontrar los mejores productos en Amazon. No vendemos productos, solo recomendamos.</p>
+                <h4><i class="fas fa-info-circle"></i> Home Office Pro</h4>
+                <p>Somos un filtro independiente que te ayuda a encontrar los mejores productos para tu oficina en casa en Amazon. No vendemos productos, solo recomendamos.</p>
                 <p class="afiliado-disclaimer-footer">
                     <i class="fas fa-handshake"></i>
                     Como afiliados de Amazon, ganamos por compras calificadas. <strong>Sin precios mostrados</strong> para evitar discrepancias.
@@ -242,10 +242,11 @@
             <div class="footer-section">
                 <h4><i class="fas fa-gavel"></i> Información Legal</h4>
                 <ul>
-                    <li><a href="/privacidad"><i class="fas fa-shield-alt"></i> Política de Privacidad</a></li>
-                    <li><a href="/cookies"><i class="fas fa-cookie-bite"></i> Política de Cookies</a></li>
+                    <li><a href="/legal/privacidad"><i class="fas fa-shield-alt"></i> Política de Privacidad</a></li>
+                    <li><a href="/legal/cookies"><i class="fas fa-cookie-bite"></i> Política de Cookies</a></li>
                     <li><a href="/terminos"><i class="fas fa-file-signature"></i> Términos y Condiciones</a></li>
-                    <li><a href="/legal"><i class="fas fa-scale-balanced"></i> Aviso Legal</a></li>
+                    <li><a href="/legal/aviso-legal"><i class="fas fa-scale-balanced"></i> Aviso Legal</a></li>
+                    <li><a href="/legal/afiliados"><i class="fas fa-hand-holding-usd"></i> Declaración de Afiliados</a></li>
                 </ul>
             </div>
             
@@ -269,7 +270,7 @@
         <!-- Barra inferior del footer -->
         <div class="footer-bottom">
             <div class="footer-bottom-content">
-                <p>&copy; 2024 La Preferida - Todos los derechos reservados</p>
+                <p>&copy; 2024 Home Office Pro - Todos los derechos reservados</p>
                 <div class="footer-links">
                     <a href="/mapa-web">Mapa Web</a>
                     <a href="/faq">FAQ</a>

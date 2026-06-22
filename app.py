@@ -12,80 +12,66 @@ import random
 import os
 import re
 
-# ===== API DE AMAZON (COMENTADA - PARA USO FUTURO) =====
-# try:
-#     from amazon_paapi import AmazonApi
-#     AMAZON_API_DISPONIBLE = True
-# except ImportError:
-#     AMAZON_API_DISPONIBLE = False
-#     print("ℹ️ API de Amazon no disponible - modo manual activado")
-
 # ===== CONFIGURACIÓN DE LOGGING MEJORADA =====
-# Configuración básica
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler()  # Solo consola inicialmente
+        logging.StreamHandler()
     ]
 )
 
-# Configurar manejador de archivo para WARNING y superior
 file_handler = logging.FileHandler('app.log')
-file_handler.setLevel(logging.WARNING)  # Solo warnings y errors en archivo
+file_handler.setLevel(logging.WARNING)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Obtener logger raíz y configurarlo
 logger = logging.getLogger()
-logger.handlers = []  # Limpiar handlers existentes
+logger.handlers = []
 logger.addHandler(file_handler)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+# ===== CREAR LA APLICACIÓN =====
 app = Flask(__name__)
 
-# Configuración de seguridad
+# ===== CONFIGURACIÓN DE SEGURIDAD =====
 IS_PRODUCTION = os.environ.get('PRODUCTION', 'False').lower() == 'true'
 
-# Configuración desde variables de entorno (OBLIGATORIO EN PRODUCCIÓN)
+# Secret Key - OBLIGATORIO en producción
 app.secret_key = os.environ.get('SECRET_KEY')
 if not app.secret_key:
     if IS_PRODUCTION:
         raise ValueError("""
         ⚠️ ERROR CRÍTICO: Variable de entorno SECRET_KEY no configurada.
         En producción, debes establecer una SECRET_KEY segura.
-        Ejemplo: export SECRET_KEY='tu-clave-secreta-muy-segura-aqui'
         """)
     else:
-        # Solo para desarrollo, usar una clave aleatoria
         app.secret_key = os.urandom(24).hex()
         print("⚠️ ADVERTENCIA: Usando SECRET_KEY aleatoria en desarrollo")
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
-# Configuración de base de datos (USAR VARIABLE DE ENTORNO EN PRODUCCIÓN)
+# ===== CONFIGURACIÓN DE BASE DE DATOS =====
+# Para PythonAnywhere - USAR RUTA ABSOLUTA
+DATABASE_PATH = '/home/Ysmailin89/filtro_amazon.db'  # CAMBIA ESTO SEGÚN TU USUARIO
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'DATABASE_URL',  # Variable común en hostings (Render, PythonAnywhere, etc.)
-    'sqlite:///filtro_amazon.db'  # Fallback para desarrollo local
+    'DATABASE_URL',
+    f'sqlite:///{DATABASE_PATH}'  # Ruta absoluta para PythonAnywhere
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Configuración de sesiones
 app.config.update(
-    SESSION_COOKIE_SECURE=IS_PRODUCTION,  # Solo HTTPS en producción
+    SESSION_COOKIE_SECURE=IS_PRODUCTION,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     MAX_CONTENT_LENGTH=16 * 1024 * 1024
 )
 
-# ===== VARIABLES DE API PARA USO FUTURO (COMENTADAS) =====
-# AMAZON_ACCESS_KEY = os.environ.get('AMAZON_ACCESS_KEY', '')
-# AMAZON_SECRET_KEY = os.environ.get('AMAZON_SECRET_KEY', '')
-# AMAZON_ASSOCIATE_TAG = os.environ.get('AMAZON_ASSOCIATE_TAG', '')
-# AMAZON_COUNTRY = os.environ.get('AMAZON_COUNTRY', 'es')
-
-# Inicializar extensiones
+# ===== INICIALIZAR EXTENSIONES =====
 db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
 
@@ -145,116 +131,118 @@ class Visita(db.Model):
 # ========== CONFIGURACIÓN INICIAL ==========
 def init_db():
     """Inicializa la base de datos con datos por defecto"""
-    db.create_all()
-    
-    # Crear usuario admin por defecto si no existe
-    if not Usuario.query.filter_by(username='admin').first():
-        admin = Usuario(
-            username='admin',
-            nombre='Administrador',
-            email='admin@miafiliado.com',
-            rol='admin'
-        )
-        admin.set_password('admin123')
-        db.session.add(admin)
-    
-    # Crear usuario editor por defecto
-    if not Usuario.query.filter_by(username='editor').first():
-        editor = Usuario(
-            username='editor',
-            nombre='Editor',
-            email='editor@miafiliado.com',
-            rol='editor'
-        )
-        editor.set_password('editor123')
-        db.session.add(editor)
-    
-    # Categorías por defecto
-    categorias_default = [
-        ('electronica', 'Electrónica', 'laptop'),
-        ('hogar', 'Hogar', 'home'),
-        ('libros', 'Libros', 'book'),
-        ('moda', 'Moda', 'tshirt'),
-        ('deportes', 'Deportes', 'futbol'),
-        ('juguetes', 'Juguetes', 'gamepad'),
-        ('belleza', 'Belleza', 'spa'),
-        ('alimentacion', 'Alimentación', 'utensils'),
-        ('mascotas', 'Mascotas', 'paw'),
-        ('bebe', 'Bebé', 'baby'),
-        ('herramientas', 'Herramientas', 'tools'),
-        ('jardin', 'Jardín', 'seedling'),
-        ('automocion', 'Automoción', 'car'),
-        ('salud', 'Salud', 'heartbeat')
-    ]
-    
-    for cat_id, nombre, icono in categorias_default:
-        if not Categoria.query.filter_by(categoria_id=cat_id).first():
-            cat = Categoria(categoria_id=cat_id, nombre=nombre, icono=icono)
-            db.session.add(cat)
-    
-    # Productos de ejemplo
-    if Producto.query.count() == 0:
-        productos_ejemplo = [
-            Producto(
-                titulo='Apple AirPods Pro (2ª generación)',
-                descripcion='Auriculares inalámbricos con cancelación de ruido, chip H2, audio espacial personalizado',
-                imagen='https://m.media-amazon.com/images/I/61SUj2aKoEL._AC_SL1500_.jpg',
-                url='https://www.amazon.es/dp/B0BDK62PDX/',
-                categoria='electronica',
-                destacado=True,
-                clics=150,
-                fecha_creacion='2024-01-15'
-            ),
-            Producto(
-                titulo='Kindle Paperwhite (11ª generación)',
-                descripcion='Pantalla de 6.8 pulgadas, luz cálida ajustable, resistente al agua IPX8',
-                imagen='https://m.media-amazon.com/images/I/61L6+U6K6OL._AC_SL1500_.jpg',
-                url='https://www.amazon.es/dp/B08N2XW7Z3/',
-                categoria='libros',
-                destacado=True,
-                clics=89,
-                fecha_creacion='2024-01-20'
-            ),
-            Producto(
-                titulo='Echo Dot (5ª generación)',
-                descripcion='Altavoz inteligente con Alexa, sonido mejorado y diseño compacto',
-                imagen='https://m.media-amazon.com/images/I/61+x3oG7SLL._AC_SL1500_.jpg',
-                url='https://www.amazon.es/dp/B09B8V1LZ3/',
-                categoria='electronica',
-                destacado=False,
-                clics=45,
-                fecha_creacion='2024-02-01'
+    try:
+        db.create_all()
+        
+        # Crear usuario admin por defecto
+        if not Usuario.query.filter_by(username='admin').first():
+            admin = Usuario(
+                username='admin',
+                nombre='Administrador',
+                email='admin@miafiliado.com',
+                rol='admin'
             )
+            admin.set_password('admin123')
+            db.session.add(admin)
+        
+        # Crear usuario editor por defecto
+        if not Usuario.query.filter_by(username='editor').first():
+            editor = Usuario(
+                username='editor',
+                nombre='Editor',
+                email='editor@miafiliado.com',
+                rol='editor'
+            )
+            editor.set_password('editor123')
+            db.session.add(editor)
+        
+        # Categorías por defecto
+        categorias_default = [
+            ('electronica', 'Electrónica', 'laptop'),
+            ('hogar', 'Hogar', 'home'),
+            ('libros', 'Libros', 'book'),
+            ('moda', 'Moda', 'tshirt'),
+            ('deportes', 'Deportes', 'futbol'),
+            ('juguetes', 'Juguetes', 'gamepad'),
+            ('belleza', 'Belleza', 'spa'),
+            ('alimentacion', 'Alimentación', 'utensils'),
+            ('mascotas', 'Mascotas', 'paw'),
+            ('bebe', 'Bebé', 'baby'),
+            ('herramientas', 'Herramientas', 'tools'),
+            ('jardin', 'Jardín', 'seedling'),
+            ('automocion', 'Automoción', 'car'),
+            ('salud', 'Salud', 'heartbeat')
         ]
         
-        for prod in productos_ejemplo:
-            db.session.add(prod)
-    
-    # Configuración por defecto
-    config_defaults = {
-        'nombre': 'Mi Filtro Amazon',
-        'dominio': 'miafiliado.com',
-        'email_contacto': 'info@miafiliado.com',
-        'telefono': '+34 123 456 789',
-        'direccion': 'Madrid, España',
-        'amazon_tag': 'miafiliado-21',
-        'color_principal': '#ff9900',
-        'meta_description': 'Encuentra los mejores productos de Amazon seleccionados especialmente para ti.',
-        'meta_keywords': 'amazon, productos, filtro, ofertas, recomendaciones',
-        'google_analytics': ''
-    }
-    
-    for clave, valor in config_defaults.items():
-        if not Configuracion.query.filter_by(clave=clave).first():
-            conf = Configuracion(clave=clave, valor=valor)
-            db.session.add(conf)
-    
-    try:
+        for cat_id, nombre, icono in categorias_default:
+            if not Categoria.query.filter_by(categoria_id=cat_id).first():
+                cat = Categoria(categoria_id=cat_id, nombre=nombre, icono=icono)
+                db.session.add(cat)
+        
+        # Productos de ejemplo
+        if Producto.query.count() == 0:
+            productos_ejemplo = [
+                Producto(
+                    titulo='Apple AirPods Pro (2ª generación)',
+                    descripcion='Auriculares inalámbricos con cancelación de ruido, chip H2, audio espacial personalizado',
+                    imagen='https://m.media-amazon.com/images/I/61SUj2aKoEL._AC_SL1500_.jpg',
+                    url='https://www.amazon.es/dp/B0BDK62PDX/',
+                    categoria='electronica',
+                    destacado=True,
+                    clics=150,
+                    fecha_creacion='2024-01-15'
+                ),
+                Producto(
+                    titulo='Kindle Paperwhite (11ª generación)',
+                    descripcion='Pantalla de 6.8 pulgadas, luz cálida ajustable, resistente al agua IPX8',
+                    imagen='https://m.media-amazon.com/images/I/61L6+U6K6OL._AC_SL1500_.jpg',
+                    url='https://www.amazon.es/dp/B08N2XW7Z3/',
+                    categoria='libros',
+                    destacado=True,
+                    clics=89,
+                    fecha_creacion='2024-01-20'
+                ),
+                Producto(
+                    titulo='Echo Dot (5ª generación)',
+                    descripcion='Altavoz inteligente con Alexa, sonido mejorado y diseño compacto',
+                    imagen='https://m.media-amazon.com/images/I/61+x3oG7SLL._AC_SL1500_.jpg',
+                    url='https://www.amazon.es/dp/B09B8V1LZ3/',
+                    categoria='electronica',
+                    destacado=False,
+                    clics=45,
+                    fecha_creacion='2024-02-01'
+                )
+            ]
+            
+            for prod in productos_ejemplo:
+                db.session.add(prod)
+        
+        # Configuración por defecto
+        config_defaults = {
+            'nombre': 'Mi Filtro Amazon',
+            'dominio': 'miafiliado.com',
+            'email_contacto': 'info@miafiliado.com',
+            'telefono': '+34 123 456 789',
+            'direccion': 'Madrid, España',
+            'amazon_tag': 'miafiliado-21',
+            'color_principal': '#ff9900',
+            'meta_description': 'Encuentra los mejores productos de Amazon seleccionados especialmente para ti.',
+            'meta_keywords': 'amazon, productos, filtro, ofertas, recomendaciones',
+            'google_analytics': ''
+        }
+        
+        for clave, valor in config_defaults.items():
+            if not Configuracion.query.filter_by(clave=clave).first():
+                conf = Configuracion(clave=clave, valor=valor)
+                db.session.add(conf)
+        
         db.session.commit()
         logger.info("Base de datos inicializada correctamente")
+        return True
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error inicializando base de datos: {e}")
+        return False
 
 # ========== FUNCIONES DE AYUDA ==========
 def get_config():
@@ -297,7 +285,6 @@ def get_estadisticas():
     semana_count = Visita.query.filter(Visita.fecha >= semana_inicio).count()
     mes_count = Visita.query.filter(Visita.fecha >= mes_inicio).count()
     
-    # Páginas más visitadas
     paginas = {}
     visitas_por_pagina = db.session.query(
         Visita.pagina, db.func.count(Visita.id)
@@ -369,8 +356,6 @@ def admin_required(f):
 # ========== CONTEXTO GLOBAL ==========
 @app.context_processor
 def inject_now():
-    """Inyecta datetime.now() y timedelta en todas las plantillas"""
-    from datetime import timedelta
     return {
         'now': datetime.now(),
         'timedelta': timedelta
@@ -653,6 +638,40 @@ def panel_categoria_nueva():
     
     return redirect(url_for('panel_categorias'))
 
+@app.route('/panel/categorias/editar/<categoria_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def panel_categoria_editar(categoria_id):
+    """Editar una categoría existente"""
+    actualizar_estadisticas('panel_categoria_editar')
+    
+    categoria_id_limpio = escape(categoria_id)
+    categoria = Categoria.query.filter_by(categoria_id=categoria_id_limpio).first_or_404()
+    
+    if request.method == 'POST':
+        nuevo_nombre = escape(request.form.get('nombre', ''))
+        
+        if not nuevo_nombre:
+            flash('El nombre no puede estar vacío', 'error')
+            return redirect(url_for('panel_categoria_editar', categoria_id=categoria_id))
+        
+        try:
+            categoria.nombre = nuevo_nombre
+            db.session.commit()
+            logger.info(f"Categoría actualizada: {categoria_id}")
+            flash('Categoría actualizada correctamente', 'success')
+            return redirect(url_for('panel_categorias'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error actualizando categoría: {e}")
+            flash('Error al actualizar la categoría', 'error')
+    
+    return render_template('panel/categoria_editar.html',
+                         categoria=categoria,
+                         categorias=get_categorias(),
+                         categorias_lista=get_categorias_lista(),
+                         usuario=session.get('nombre'))
+
 @app.route('/panel/categorias/eliminar/<categoria_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -684,8 +703,7 @@ def panel_categoria_eliminar(categoria_id):
     
     return redirect(url_for('panel_categorias'))
 
-# ===== RUTAS DE PERFIL Y USUARIOS (CORREGIDAS Y COMPLETAS) =====
-
+# ===== RUTAS DE PERFIL Y USUARIOS =====
 @app.route('/panel/perfil', methods=['GET', 'POST'])
 @login_required
 def panel_perfil():
@@ -695,11 +713,9 @@ def panel_perfil():
     usuario = Usuario.query.filter_by(username=username).first_or_404()
     
     if request.method == 'POST':
-        # Actualizar datos básicos del perfil
         usuario.nombre = escape(request.form.get('nombre', usuario.nombre))
         usuario.email = escape(request.form.get('email', usuario.email))
         
-        # Validar que el email no esté en uso por otro usuario
         email_existente = Usuario.query.filter(
             Usuario.email == usuario.email,
             Usuario.username != username
@@ -709,24 +725,19 @@ def panel_perfil():
             flash('El email ya está registrado por otro usuario', 'error')
             return redirect(url_for('panel_perfil'))
         
-        # 🔐 CAMBIO DE CONTRASEÑA DESDE EL MISMO FORMULARIO
         password_actual = request.form.get('password_actual', '')
         password_nueva = request.form.get('password_nueva', '')
         password_confirmar = request.form.get('password_confirmar', '')
         
-        # Si se proporcionó alguna contraseña, validar el cambio
         if password_actual or password_nueva or password_confirmar:
-            # Verificar que todos los campos estén completos
             if not password_actual or not password_nueva or not password_confirmar:
                 flash('Debes completar todos los campos de contraseña', 'error')
                 return redirect(url_for('panel_perfil'))
             
-            # Verificar contraseña actual
             if not usuario.check_password(password_actual):
                 flash('La contraseña actual es incorrecta', 'error')
                 return redirect(url_for('panel_perfil'))
             
-            # Validar nueva contraseña
             if len(password_nueva) < 6:
                 flash('La nueva contraseña debe tener al menos 6 caracteres', 'error')
                 return redirect(url_for('panel_perfil'))
@@ -735,7 +746,6 @@ def panel_perfil():
                 flash('Las contraseñas no coinciden', 'error')
                 return redirect(url_for('panel_perfil'))
             
-            # Actualizar contraseña
             usuario.set_password(password_nueva)
             flash('Contraseña actualizada correctamente', 'success')
         
@@ -773,7 +783,6 @@ def panel_usuario_nuevo():
     nuevo_password = request.form.get('nuevo_password', '')
     nuevo_confirm = request.form.get('nuevo_confirm', '')
     
-    # Validaciones
     if Usuario.query.filter_by(username=nuevo_username).first():
         flash('El nombre de usuario ya existe', 'error')
         return redirect(url_for('panel_perfil') + '#usuarios')
@@ -790,7 +799,6 @@ def panel_usuario_nuevo():
         flash('Las contraseñas no coinciden', 'error')
         return redirect(url_for('panel_perfil') + '#usuarios')
     
-    # Crear usuario
     usuario = Usuario(
         username=nuevo_username,
         nombre=nuevo_nombre,
@@ -811,12 +819,10 @@ def panel_usuario_nuevo():
     
     return redirect(url_for('panel_perfil') + '#usuarios')
 
-
 @app.route('/panel/usuarios/editar', methods=['POST'])
 @login_required
 @admin_required
 def panel_usuario_editar():
-    """Editar un usuario existente (solo admin)"""
     actualizar_estadisticas('panel_usuario_editar')
     
     username = escape(request.form.get('edit_username', ''))
@@ -832,7 +838,6 @@ def panel_usuario_editar():
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('panel_perfil') + '#usuarios')
     
-    # Validar email único (excepto para este usuario)
     email_existente = Usuario.query.filter(
         Usuario.email == email,
         Usuario.username != username
@@ -842,12 +847,10 @@ def panel_usuario_editar():
         flash('El email ya está registrado por otro usuario', 'error')
         return redirect(url_for('panel_perfil') + '#usuarios')
     
-    # Actualizar datos básicos
     usuario.nombre = nombre
     usuario.email = email
     usuario.rol = rol
     
-    # Cambiar contraseña si se proporcionó
     if nueva_password:
         if len(nueva_password) < 6:
             flash('La contraseña debe tener al menos 6 caracteres', 'error')
@@ -870,7 +873,6 @@ def panel_usuario_editar():
         flash('Error al actualizar el usuario', 'error')
     
     return redirect(url_for('panel_perfil') + '#usuarios')
-
 
 @app.route('/panel/usuarios/eliminar/<username>', methods=['POST'])
 @login_required
@@ -901,12 +903,10 @@ def panel_usuario_eliminar(username):
     
     return redirect(url_for('panel_perfil') + '#usuarios')
 
-
 @app.route('/panel/usuarios/datos/<username>', methods=['GET'])
 @login_required
 @admin_required
 def panel_usuario_datos(username):
-    """API para obtener datos de un usuario (para el modal de edición)"""
     username_limpio = escape(username)
     usuario = Usuario.query.filter_by(username=username_limpio).first()
     
@@ -921,7 +921,6 @@ def panel_usuario_datos(username):
     return jsonify({'error': 'Usuario no encontrado'}), 404
 
 # ===== RUTAS DE CONFIGURACIÓN =====
-
 @app.route('/panel/configuracion', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -1067,8 +1066,6 @@ def panel_estadisticas():
     visitas_hoy = Visita.query.filter_by(fecha=hoy).count()
     visitas_ayer = Visita.query.filter_by(fecha=ayer).count()
     
-    # Obtener datos de visitas por día para el gráfico
-    from collections import defaultdict
     visitas_por_dia_real = defaultdict(int)
     ultimos_7_dias = Visita.query.filter(
         Visita.fecha >= (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
@@ -1099,7 +1096,6 @@ def panel_notificaciones():
 def index():
     actualizar_estadisticas('inicio')
     
-    # 👇 Cambiar a todos los productos
     productos = Producto.query.all()
     
     categoria_actual = request.args.get('categoria')
@@ -1108,7 +1104,7 @@ def index():
         productos = Producto.query.filter_by(categoria=categoria_actual).all()
     
     return render_template('index.html', 
-                         productos=productos,  # ✅ Todos los productos
+                         productos=productos,
                          categorias=get_categorias_lista(),
                          categoria_actual=categoria_actual)
 
@@ -1162,7 +1158,6 @@ def legal():
     actualizar_estadisticas('legal')
     return render_template('legal.html', categorias=get_categorias_lista())
 
-# ========== RUTAS LEGALES COMPLETAS ==========
 @app.route('/legal/privacidad')
 def legal_privacidad():
     actualizar_estadisticas('legal_privacidad')
@@ -1359,44 +1354,6 @@ def internal_error(error):
                          error_id=error_id,
                          now=datetime.now()), 500
 
-
-
-@app.route('/panel/categorias/editar/<categoria_id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def panel_categoria_editar(categoria_id):
-    """Editar una categoría existente"""
-    actualizar_estadisticas('panel_categoria_editar')
-    
-    categoria_id_limpio = escape(categoria_id)
-    categoria = Categoria.query.filter_by(categoria_id=categoria_id_limpio).first_or_404()
-    
-    if request.method == 'POST':
-        nuevo_nombre = escape(request.form.get('nombre', ''))
-        
-        if not nuevo_nombre:
-            flash('El nombre no puede estar vacío', 'error')
-            return redirect(url_for('panel_categoria_editar', categoria_id=categoria_id))
-        
-        try:
-            categoria.nombre = nuevo_nombre
-            db.session.commit()
-            logger.info(f"Categoría actualizada: {categoria_id}")
-            flash('Categoría actualizada correctamente', 'success')
-            return redirect(url_for('panel_categorias'))
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error actualizando categoría: {e}")
-            flash('Error al actualizar la categoría', 'error')
-    
-    return render_template('panel/categoria_editar.html',
-                         categoria=categoria,
-                         categorias=get_categorias(),
-                         categorias_lista=get_categorias_lista(),
-                         usuario=session.get('nombre'))
-
-
-
 # ========== TRADUCTOR ==========
 @app.route('/set-language/<lang>')
 def set_language(lang):
@@ -1407,12 +1364,13 @@ def set_language(lang):
 # ========== INICIALIZACIÓN Y EJECUCIÓN ==========
 if __name__ == '__main__':
     with app.app_context():
-        # Inicializar base de datos si no existe
-        if not os.path.exists('filtro_amazon.db') and 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
-            init_db()
-            print("✅ Base de datos SQLite creada por primera vez")
+        if not os.path.exists(DATABASE_PATH) and 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+            success = init_db()
+            if success:
+                print("✅ Base de datos SQLite creada por primera vez")
+            else:
+                print("❌ Error al crear la base de datos")
         elif 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] or 'mysql' in app.config['SQLALCHEMY_DATABASE_URI']:
-            # Para bases de datos no SQLite, solo crear tablas si no existen
             db.create_all()
             print("✅ Conexión a base de datos establecida")
     
@@ -1434,12 +1392,10 @@ if __name__ == '__main__':
         print("   ✅ Logging profesional")
         print("=" * 60)
         
-        # Solo ejecutar servidor de desarrollo si no estamos en producción
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("=" * 60)
         print("✅ APLICACIÓN LISTA PARA PRODUCCIÓN")
         print("=" * 60)
-        print("📊 Usa Gunicorn o el servidor WSGI de tu hosting:")
-        print("   gunicorn -w 4 app:app")
+        print("📊 Usa Gunicorn o el servidor WSGI de tu hosting")
         print("=" * 60)

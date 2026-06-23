@@ -13,9 +13,12 @@ import os
 import re
 import sys
 
+<<<<<<< HEAD
 # ===== DETECCIÓN DE SISTEMA OPERATIVO =====
 IS_WINDOWS = os.name == 'nt'
 
+=======
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 # ===== CONFIGURACIÓN DE LOGGING MEJORADA =====
 logging.basicConfig(
     level=logging.INFO,
@@ -58,6 +61,7 @@ if not app.secret_key:
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # ===== CONFIGURACIÓN DE BASE DE DATOS =====
+<<<<<<< HEAD
 # Detectar automáticamente la ruta según el sistema operativo
 if IS_WINDOWS:
     # Windows - La base de datos se creará en la misma carpeta que app.py
@@ -81,6 +85,14 @@ print(f"📁 Base de datos: {DATABASE_PATH}")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL',
     f'sqlite:///{DATABASE_PATH}'
+=======
+# Para PythonAnywhere - USAR RUTA ABSOLUTA
+DATABASE_PATH = '/home/Ysmailin89/filtro_amazon.db'  # CAMBIA ESTO SEGÚN TU USUARIO
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL',
+    f'sqlite:///{DATABASE_PATH}'  # Ruta absoluta para PythonAnywhere
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -327,6 +339,7 @@ def actualizar_estadisticas(pagina):
 
 def get_estadisticas():
     """Obtiene estadísticas de visitas"""
+<<<<<<< HEAD
     try:
         hoy = datetime.now().strftime('%Y-%m-%d')
         semana_inicio = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
@@ -363,6 +376,33 @@ def get_estadisticas():
             'paginas': {},
             'fecha_actualizacion': datetime.now().strftime('%Y-%m-%d')
         }
+=======
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    semana_inicio = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    mes_inicio = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    
+    total = Visita.query.count()
+    hoy_count = Visita.query.filter_by(fecha=hoy).count()
+    semana_count = Visita.query.filter(Visita.fecha >= semana_inicio).count()
+    mes_count = Visita.query.filter(Visita.fecha >= mes_inicio).count()
+    
+    paginas = {}
+    visitas_por_pagina = db.session.query(
+        Visita.pagina, db.func.count(Visita.id)
+    ).group_by(Visita.pagina).order_by(db.func.count(Visita.id).desc()).limit(10).all()
+    
+    for pagina, count in visitas_por_pagina:
+        paginas[pagina] = count
+    
+    return {
+        'total': total,
+        'hoy': hoy_count,
+        'semana': semana_count,
+        'mes': mes_count,
+        'paginas': paginas,
+        'fecha_actualizacion': hoy
+    }
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 def get_visitas_por_dia():
     """Obtiene visitas de los últimos 7 días para el gráfico"""
@@ -770,11 +810,16 @@ def panel_categoria_nueva():
     
     return redirect(url_for('panel_categorias'))
 
+<<<<<<< HEAD
 @app.route('/panel/categorias/editar/<int:categoria_id>', methods=['GET', 'POST'])
+=======
+@app.route('/panel/categorias/editar/<categoria_id>', methods=['GET', 'POST'])
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 @login_required
 @admin_required
 def panel_categoria_editar(categoria_id):
     """Editar una categoría existente"""
+<<<<<<< HEAD
     try:
         actualizar_estadisticas('panel_categoria_editar')
         
@@ -810,6 +855,38 @@ def panel_categoria_editar(categoria_id):
         return redirect(url_for('panel_categorias'))
 
 @app.route('/panel/categorias/eliminar/<int:categoria_id>', methods=['POST'])
+=======
+    actualizar_estadisticas('panel_categoria_editar')
+    
+    categoria_id_limpio = escape(categoria_id)
+    categoria = Categoria.query.filter_by(categoria_id=categoria_id_limpio).first_or_404()
+    
+    if request.method == 'POST':
+        nuevo_nombre = escape(request.form.get('nombre', ''))
+        
+        if not nuevo_nombre:
+            flash('El nombre no puede estar vacío', 'error')
+            return redirect(url_for('panel_categoria_editar', categoria_id=categoria_id))
+        
+        try:
+            categoria.nombre = nuevo_nombre
+            db.session.commit()
+            logger.info(f"Categoría actualizada: {categoria_id}")
+            flash('Categoría actualizada correctamente', 'success')
+            return redirect(url_for('panel_categorias'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error actualizando categoría: {e}")
+            flash('Error al actualizar la categoría', 'error')
+    
+    return render_template('panel/categoria_editar.html',
+                         categoria=categoria,
+                         categorias=get_categorias(),
+                         categorias_lista=get_categorias_lista(),
+                         usuario=session.get('nombre'))
+
+@app.route('/panel/categorias/eliminar/<categoria_id>', methods=['POST'])
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 @login_required
 @admin_required
 def panel_categoria_eliminar(categoria_id):
@@ -844,11 +921,27 @@ def panel_categoria_eliminar(categoria_id):
 @app.route('/panel/perfil', methods=['GET', 'POST'])
 @login_required
 def panel_perfil():
+<<<<<<< HEAD
     try:
         actualizar_estadisticas('panel_perfil')
         
         username = session.get('usuario')
         usuario = Usuario.query.filter_by(username=username).first_or_404()
+=======
+    actualizar_estadisticas('panel_perfil')
+    
+    username = session.get('usuario')
+    usuario = Usuario.query.filter_by(username=username).first_or_404()
+    
+    if request.method == 'POST':
+        usuario.nombre = escape(request.form.get('nombre', usuario.nombre))
+        usuario.email = escape(request.form.get('email', usuario.email))
+        
+        email_existente = Usuario.query.filter(
+            Usuario.email == usuario.email,
+            Usuario.username != username
+        ).first()
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
         
         if request.method == 'POST':
             usuario.nombre = escape(request.form.get('nombre', usuario.nombre))
@@ -900,6 +993,7 @@ def panel_perfil():
             
             return redirect(url_for('panel_perfil'))
         
+<<<<<<< HEAD
         return render_template('panel/perfil.html',
                              usuario_data=usuario,
                              usuarios=Usuario.query.all(),
@@ -912,11 +1006,93 @@ def panel_perfil():
         logger.error(f"Error en panel_perfil: {e}")
         flash('Error al cargar el perfil', 'error')
         return redirect(url_for('panel_dashboard'))
+=======
+        password_actual = request.form.get('password_actual', '')
+        password_nueva = request.form.get('password_nueva', '')
+        password_confirmar = request.form.get('password_confirmar', '')
+        
+        if password_actual or password_nueva or password_confirmar:
+            if not password_actual or not password_nueva or not password_confirmar:
+                flash('Debes completar todos los campos de contraseña', 'error')
+                return redirect(url_for('panel_perfil'))
+            
+            if not usuario.check_password(password_actual):
+                flash('La contraseña actual es incorrecta', 'error')
+                return redirect(url_for('panel_perfil'))
+            
+            if len(password_nueva) < 6:
+                flash('La nueva contraseña debe tener al menos 6 caracteres', 'error')
+                return redirect(url_for('panel_perfil'))
+            
+            if password_nueva != password_confirmar:
+                flash('Las contraseñas no coinciden', 'error')
+                return redirect(url_for('panel_perfil'))
+            
+            usuario.set_password(password_nueva)
+            flash('Contraseña actualizada correctamente', 'success')
+        
+        try:
+            db.session.commit()
+            session['nombre'] = usuario.nombre
+            logger.info(f"Perfil actualizado: {username}")
+            if not (password_actual or password_nueva or password_confirmar):
+                flash('Perfil actualizado correctamente', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error actualizando perfil: {e}")
+            flash('Error al actualizar el perfil', 'error')
+        
+        return redirect(url_for('panel_perfil'))
+    
+    return render_template('panel/perfil.html',
+                         usuario_data=usuario,
+                         usuarios=Usuario.query.all(),
+                         total_usuarios=Usuario.query.count(),
+                         categorias=get_categorias(),
+                         categorias_lista=get_categorias_lista(),
+                         usuario=session.get('nombre'))
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 @app.route('/panel/usuarios/nuevo', methods=['POST'])
 @login_required
 @admin_required
 def panel_usuario_nuevo():
+<<<<<<< HEAD
+=======
+    actualizar_estadisticas('panel_usuario_nuevo')
+    
+    nuevo_username = escape(request.form.get('nuevo_username', ''))
+    nuevo_nombre = escape(request.form.get('nuevo_nombre', ''))
+    nuevo_email = escape(request.form.get('nuevo_email', ''))
+    nuevo_rol = escape(request.form.get('nuevo_rol', 'viewer'))
+    nuevo_password = request.form.get('nuevo_password', '')
+    nuevo_confirm = request.form.get('nuevo_confirm', '')
+    
+    if Usuario.query.filter_by(username=nuevo_username).first():
+        flash('El nombre de usuario ya existe', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    if Usuario.query.filter_by(email=nuevo_email).first():
+        flash('El email ya está registrado', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    if len(nuevo_password) < 6:
+        flash('La contraseña debe tener al menos 6 caracteres', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    if nuevo_password != nuevo_confirm:
+        flash('Las contraseñas no coinciden', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    usuario = Usuario(
+        username=nuevo_username,
+        nombre=nuevo_nombre,
+        email=nuevo_email,
+        rol=nuevo_rol
+    )
+    usuario.set_password(nuevo_password)
+    
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
     try:
         actualizar_estadisticas('panel_usuario_nuevo')
         
@@ -971,6 +1147,49 @@ def panel_usuario_nuevo():
 @login_required
 @admin_required
 def panel_usuario_editar():
+<<<<<<< HEAD
+=======
+    actualizar_estadisticas('panel_usuario_editar')
+    
+    username = escape(request.form.get('edit_username', ''))
+    nombre = escape(request.form.get('edit_nombre', ''))
+    email = escape(request.form.get('edit_email', ''))
+    rol = escape(request.form.get('edit_rol', 'viewer'))
+    nueva_password = request.form.get('edit_password', '')
+    confirm_password = request.form.get('edit_confirm', '')
+    
+    usuario = Usuario.query.filter_by(username=username).first()
+    
+    if not usuario:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    email_existente = Usuario.query.filter(
+        Usuario.email == email,
+        Usuario.username != username
+    ).first()
+    
+    if email_existente:
+        flash('El email ya está registrado por otro usuario', 'error')
+        return redirect(url_for('panel_perfil') + '#usuarios')
+    
+    usuario.nombre = nombre
+    usuario.email = email
+    usuario.rol = rol
+    
+    if nueva_password:
+        if len(nueva_password) < 6:
+            flash('La contraseña debe tener al menos 6 caracteres', 'error')
+            return redirect(url_for('panel_perfil') + '#usuarios')
+        
+        if nueva_password != confirm_password:
+            flash('Las contraseñas no coinciden', 'error')
+            return redirect(url_for('panel_perfil') + '#usuarios')
+        
+        usuario.set_password(nueva_password)
+        flash('Contraseña actualizada correctamente', 'success')
+    
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
     try:
         actualizar_estadisticas('panel_usuario_editar')
         
@@ -1065,6 +1284,7 @@ def panel_usuario_eliminar(username):
 @login_required
 @admin_required
 def panel_usuario_datos(username):
+<<<<<<< HEAD
     try:
         username_limpio = escape(username)
         usuario = Usuario.query.filter_by(username=username_limpio).first()
@@ -1081,6 +1301,20 @@ def panel_usuario_datos(username):
     except Exception as e:
         logger.error(f"Error en panel_usuario_datos: {e}")
         return jsonify({'error': 'Error al obtener datos'}), 500
+=======
+    username_limpio = escape(username)
+    usuario = Usuario.query.filter_by(username=username_limpio).first()
+    
+    if usuario:
+        return jsonify({
+            'username': usuario.username,
+            'nombre': usuario.nombre,
+            'email': usuario.email,
+            'rol': usuario.rol
+        })
+    
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 # ===== RUTAS DE CONFIGURACIÓN =====
 @app.route('/panel/configuracion', methods=['GET', 'POST'])
@@ -1241,6 +1475,7 @@ def panel_config_apariencia():
 @app.route('/panel/estadisticas')
 @login_required
 def panel_estadisticas():
+<<<<<<< HEAD
     try:
         actualizar_estadisticas('panel_estadisticas')
         
@@ -1274,6 +1509,35 @@ def panel_estadisticas():
         logger.error(f"Error en panel_estadisticas: {e}")
         flash('Error al cargar las estadísticas', 'error')
         return redirect(url_for('panel_dashboard'))
+=======
+    actualizar_estadisticas('panel_estadisticas')
+    
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    ayer = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    visitas_hoy = Visita.query.filter_by(fecha=hoy).count()
+    visitas_ayer = Visita.query.filter_by(fecha=ayer).count()
+    
+    visitas_por_dia_real = defaultdict(int)
+    ultimos_7_dias = Visita.query.filter(
+        Visita.fecha >= (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    ).all()
+    
+    for v in ultimos_7_dias:
+        visitas_por_dia_real[v.fecha] += 1
+    
+    datos_semana = get_visitas_por_dia()
+    
+    return render_template('panel/estadisticas.html',
+                         visitas=get_estadisticas(),
+                         visitas_ayer=visitas_ayer,
+                         visitas_hoy=visitas_hoy,
+                         visitas_por_dia_real=visitas_por_dia_real,
+                         datos_semana=datos_semana,
+                         categorias=get_categorias(),
+                         categorias_lista=get_categorias_lista(),
+                         usuario=session.get('nombre'))
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 @app.route('/panel/notificaciones')
 @login_required
@@ -1288,6 +1552,7 @@ def panel_notificaciones():
 # ========== RUTAS PÚBLICAS ==========
 @app.route('/')
 def index():
+<<<<<<< HEAD
     try:
         actualizar_estadisticas('inicio')
         
@@ -1325,6 +1590,21 @@ def index():
                                  productos=[],
                                  categorias=get_categorias(),
                                  categoria_actual=None)
+=======
+    actualizar_estadisticas('inicio')
+    
+    productos = Producto.query.all()
+    
+    categoria_actual = request.args.get('categoria')
+    if categoria_actual:
+        categoria_actual = escape(categoria_actual)
+        productos = Producto.query.filter_by(categoria=categoria_actual).all()
+    
+    return render_template('index.html', 
+                         productos=productos,
+                         categorias=get_categorias_lista(),
+                         categoria_actual=categoria_actual)
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 @app.route('/nosotros')
 def nosotros():
@@ -1693,6 +1973,7 @@ def bad_request_error(error):
 def internal_error(error):
     error_id = f"ERR-{random.randint(1000, 9999)}"
     logger.error(f"Error 500 - ID: {error_id} - {error}")
+<<<<<<< HEAD
     try:
         return render_template('500.html',
                              categorias=get_categorias(),
@@ -1701,6 +1982,13 @@ def internal_error(error):
                              now=datetime.now()), 500
     except:
         return f"Error interno del servidor - ID: {error_id}", 500
+=======
+    return render_template('500.html', 
+                         categorias=get_categorias_lista(),
+                         request=request,
+                         error_id=error_id,
+                         now=datetime.now()), 500
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
 
 # ========== TRADUCTOR ==========
 @app.route('/set-language/<lang>')
@@ -1712,6 +2000,7 @@ def set_language(lang):
 # ========== INICIALIZACIÓN Y EJECUCIÓN ==========
 if __name__ == '__main__':
     with app.app_context():
+<<<<<<< HEAD
         # Verificar si la base de datos existe
         db_exists = os.path.exists(DATABASE_PATH)
         
@@ -1743,6 +2032,17 @@ if __name__ == '__main__':
                     print("✅ Tablas creadas correctamente")
                 except Exception as e2:
                     print(f"❌ Error creando tablas: {e2}")
+=======
+        if not os.path.exists(DATABASE_PATH) and 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+            success = init_db()
+            if success:
+                print("✅ Base de datos SQLite creada por primera vez")
+            else:
+                print("❌ Error al crear la base de datos")
+        elif 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] or 'mysql' in app.config['SQLALCHEMY_DATABASE_URI']:
+            db.create_all()
+            print("✅ Conexión a base de datos establecida")
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c
     
     if not IS_PRODUCTION:
         print("=" * 60)
@@ -1770,6 +2070,11 @@ if __name__ == '__main__':
         print("=" * 60)
         print("✅ APLICACIÓN LISTA PARA PRODUCCIÓN")
         print("=" * 60)
+<<<<<<< HEAD
         print(f"📁 BASE DE DATOS: {DATABASE_PATH}")
         print("📊 Usa Gunicorn o el servidor WSGI de tu hosting")
         print("=" * 60)
+=======
+        print("📊 Usa Gunicorn o el servidor WSGI de tu hosting")
+        print("=" * 60)
+>>>>>>> df5dbb3ef327af69cb132ffae3782e9847971c3c

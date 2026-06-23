@@ -54,8 +54,8 @@
             Todos
         </a>
         {% for cat in categorias[:8] %}
-        <a href="/categoria/{{ cat }}" class="categoria-item {% if categoria_actual == cat %}activo{% endif %}">
-            {{ cat|capitalize }}
+        <a href="/categoria/{{ cat.id }}" class="categoria-item {% if categoria_actual == cat.id %}activo{% endif %}">
+            {{ cat.nombre }}
         </a>
         {% endfor %}
     </div>
@@ -67,7 +67,7 @@
     
     {% if productos %}
     <div class="productos-grid-3">
-        {% for producto in productos[:9] %}
+        {% for producto in productos %}
         <div class="producto-card">
             <!-- Badge de producto -->
             {% if loop.index <= 3 %}
@@ -119,6 +119,31 @@
         </div>
         {% endfor %}
     </div>
+    
+    <!-- PAGINACIÓN -->
+    {% if paginacion and paginacion.pages > 1 %}
+    <div class="paginacion">
+        {% if paginacion.has_prev %}
+            <a href="{{ url_for('index', page=paginacion.prev_num, categoria=categoria_actual) }}">&laquo; Anterior</a>
+        {% endif %}
+        
+        {% for page_num in paginacion.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != paginacion.page %}
+                    <a href="{{ url_for('index', page=page_num, categoria=categoria_actual) }}">{{ page_num }}</a>
+                {% else %}
+                    <span class="pagina-actual">{{ page_num }}</span>
+                {% endif %}
+            {% else %}
+                <span>…</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if paginacion.has_next %}
+            <a href="{{ url_for('index', page=paginacion.next_num, categoria=categoria_actual) }}">Siguiente &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
     
     <!-- Botón ver más (redirige a categorías, no a página propia) -->
     <div class="ver-mas">

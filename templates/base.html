@@ -182,8 +182,8 @@
                 <ul class="categorias-lista">
                     {% for cat in categorias[:5] %}
                     <li>
-                        <a href="/categoria/{{ cat.slug if cat.slug is defined else cat }}">
-                            <i class="fas fa-folder"></i> {{ cat.nombre if cat.nombre is defined else cat|capitalize }}
+                        <a href="/categoria/{{ cat.id }}">
+                            <i class="fas fa-folder"></i> {{ cat.nombre }}
                         </a>
                     </li>
                     {% endfor %}

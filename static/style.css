@@ -7003,3 +7003,95 @@ body {
         font-size: 1rem;
     }
 }
+
+
+/* ============================================
+   PAGINACIÓN - AÑADIDO PARA INDEX.HTML
+   ============================================ */
+
+.paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 30px 0 20px;
+    flex-wrap: wrap;
+}
+
+.paginacion a,
+.paginacion .pagina-actual {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.paginacion a:hover {
+    background: #ff9900;
+    color: #000000;
+    border-color: #ff9900;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+}
+
+.paginacion .pagina-actual {
+    background: #ff9900;
+    color: #000000;
+    border-color: #ff9900;
+    font-weight: 700;
+    cursor: default;
+}
+
+.paginacion span.puntos {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* ===== RESPONSIVE PAGINACIÓN ===== */
+@media (max-width: 480px) {
+    .paginacion a,
+    .paginacion .pagina-actual {
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+        padding: 0 8px;
+    }
+}
+
+/* ===== MODO OSCURO PAGINACIÓN ===== */
+.dark-mode .paginacion a {
+    background: #2d2d2d;
+    color: #cccccc;
+    border-color: #404040;
+}
+
+.dark-mode .paginacion a:hover {
+    background: #ff9900;
+    color: #000000;
+    border-color: #ff9900;
+}
+
+.dark-mode .paginacion .pagina-actual {
+    background: #ff9900;
+    color: #000000;
+    border-color: #ff9900;
+}
+
+.dark-mode .paginacion span.puntos {
+    color: #666666;
+}

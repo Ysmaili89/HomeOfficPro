@@ -24,7 +24,7 @@
         <!-- Stats flotantes -->
         <div class="hero-stats">
             <div class="stat-item">
-                <span class="stat-number" data-target="15">0</span>
+                <span class="stat-number" data-target="{{ categorias|length }}">0</span>
                 <span class="stat-label">Categorías</span>
             </div>
             <div class="stat-item">
@@ -79,36 +79,36 @@
 
     <div class="categories-grid">
         {% for cat in categorias[:6] %}
-        <a href="/categoria/{{ cat }}" class="category-card" data-category="{{ cat }}">
+        <a href="/categoria/{{ cat.id }}" class="category-card" data-category="{{ cat.id }}">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="category-icon-wrapper">
                         <div class="icon-bg"></div>
-                        {% if cat == 'electronica' %}
+                        {% if cat.id == 'electronica' %}
                             <i class="fas fa-microchip"></i>
-                        {% elif cat == 'hogar' %}
+                        {% elif cat.id == 'hogar' %}
                             <i class="fas fa-home"></i>
-                        {% elif cat == 'libros' %}
+                        {% elif cat.id == 'libros' %}
                             <i class="fas fa-book"></i>
-                        {% elif cat == 'moda' %}
+                        {% elif cat.id == 'moda' %}
                             <i class="fas fa-tshirt"></i>
-                        {% elif cat == 'deportes' %}
+                        {% elif cat.id == 'deportes' %}
                             <i class="fas fa-futbol"></i>
-                        {% elif cat == 'juguetes' %}
+                        {% elif cat.id == 'juguetes' %}
                             <i class="fas fa-gamepad"></i>
-                        {% elif cat == 'belleza' %}
+                        {% elif cat.id == 'belleza' %}
                             <i class="fas fa-spa"></i>
-                        {% elif cat == 'alimentacion' %}
+                        {% elif cat.id == 'alimentacion' %}
                             <i class="fas fa-utensils"></i>
-                        {% elif cat == 'mascotas' %}
+                        {% elif cat.id == 'mascotas' %}
                             <i class="fas fa-paw"></i>
-                        {% elif cat == 'bebe' %}
+                        {% elif cat.id == 'bebe' %}
                             <i class="fas fa-baby"></i>
                         {% else %}
                             <i class="fas fa-tag"></i>
                         {% endif %}
                     </div>
-                    <h3>{{ cat|capitalize }}</h3>
+                    <h3>{{ cat.nombre }}</h3>
                     <div class="category-stats">
                         <span class="product-count">245 productos</span>
                         <span class="rating">
@@ -124,7 +124,7 @@
                     <div class="back-content">
                         <i class="fas fa-arrow-right"></i>
                         <span>Explorar categoría</span>
-                        <small>{{ cat|capitalize }}</small>
+                        <small>{{ cat.nombre }}</small>
                     </div>
                 </div>
             </div>
@@ -143,36 +143,36 @@
 
     <div class="categories-grid-full">
         {% for cat in categorias %}
-        <a href="/categoria/{{ cat }}" class="category-full-card">
+        <a href="/categoria/{{ cat.id }}" class="category-full-card">
             <div class="card-left">
                 <div class="icon-circle">
-                    {% if cat == 'electronica' %}
+                    {% if cat.id == 'electronica' %}
                         <i class="fas fa-laptop"></i>
-                    {% elif cat == 'hogar' %}
+                    {% elif cat.id == 'hogar' %}
                         <i class="fas fa-home"></i>
-                    {% elif cat == 'libros' %}
+                    {% elif cat.id == 'libros' %}
                         <i class="fas fa-book"></i>
-                    {% elif cat == 'moda' %}
+                    {% elif cat.id == 'moda' %}
                         <i class="fas fa-tshirt"></i>
-                    {% elif cat == 'deportes' %}
+                    {% elif cat.id == 'deportes' %}
                         <i class="fas fa-futbol"></i>
-                    {% elif cat == 'juguetes' %}
+                    {% elif cat.id == 'juguetes' %}
                         <i class="fas fa-gamepad"></i>
-                    {% elif cat == 'belleza' %}
+                    {% elif cat.id == 'belleza' %}
                         <i class="fas fa-spa"></i>
-                    {% elif cat == 'alimentacion' %}
+                    {% elif cat.id == 'alimentacion' %}
                         <i class="fas fa-utensils"></i>
-                    {% elif cat == 'mascotas' %}
+                    {% elif cat.id == 'mascotas' %}
                         <i class="fas fa-paw"></i>
-                    {% elif cat == 'bebe' %}
+                    {% elif cat.id == 'bebe' %}
                         <i class="fas fa-baby"></i>
-                    {% elif cat == 'herramientas' %}
+                    {% elif cat.id == 'herramientas' %}
                         <i class="fas fa-tools"></i>
-                    {% elif cat == 'jardin' %}
+                    {% elif cat.id == 'jardin' %}
                         <i class="fas fa-seedling"></i>
-                    {% elif cat == 'automocion' %}
+                    {% elif cat.id == 'automocion' %}
                         <i class="fas fa-car"></i>
-                    {% elif cat == 'salud' %}
+                    {% elif cat.id == 'salud' %}
                         <i class="fas fa-heartbeat"></i>
                     {% else %}
                         <i class="fas fa-tag"></i>
@@ -180,8 +180,8 @@
                 </div>
             </div>
             <div class="card-content">
-                <h3>{{ cat|capitalize }}</h3>
-                <p>Descubre los mejores productos de {{ cat }}</p>
+                <h3>{{ cat.nombre }}</h3>
+                <p>Descubre los mejores productos de {{ cat.nombre }}</p>
                 <div class="card-meta">
                     <span class="product-badge">+245 productos</span>
                     <span class="card-link">Ver todo <i class="fas fa-arrow-right"></i></span>
@@ -205,20 +205,20 @@
         <div class="category-product-card">
             <div class="category-product-header">
                 <div class="header-icon">
-                    {% if cat == 'electronica' %}
+                    {% if cat.id == 'electronica' %}
                         <i class="fas fa-laptop"></i>
-                    {% elif cat == 'hogar' %}
+                    {% elif cat.id == 'hogar' %}
                         <i class="fas fa-home"></i>
-                    {% elif cat == 'libros' %}
+                    {% elif cat.id == 'libros' %}
                         <i class="fas fa-book"></i>
-                    {% elif cat == 'moda' %}
+                    {% elif cat.id == 'moda' %}
                         <i class="fas fa-tshirt"></i>
                     {% else %}
                         <i class="fas fa-tag"></i>
                     {% endif %}
                 </div>
-                <h3>{{ cat|capitalize }}</h3>
-                <a href="/categoria/{{ cat }}" class="header-link">
+                <h3>{{ cat.nombre }}</h3>
+                <a href="/categoria/{{ cat.id }}" class="header-link">
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
@@ -263,7 +263,7 @@
                     </div>
                 </div>
             </div>
-            <a href="/categoria/{{ cat }}" class="view-all-link">
+            <a href="/categoria/{{ cat.id }}" class="view-all-link">
                 Ver todos los productos <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -289,7 +289,7 @@
             {% for cat in categorias[:6] %}
             <div class="map-node category-node">
                 <i class="fas fa-folder"></i>
-                <span>{{ cat|capitalize }}</span>
+                <span>{{ cat.nombre }}</span>
                 <div class="node-children">
                     <a href="#" class="child-link">Subcategoría 1</a>
                     <a href="#" class="child-link">Subcategoría 2</a>
